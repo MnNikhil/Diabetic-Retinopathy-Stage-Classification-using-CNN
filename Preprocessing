@@ -1,0 +1,32 @@
+clc;
+clearvars;
+close all
+
+showAll = 1;
+warning('off')
+delayTime = 0;
+
+db_path = fullfile(pwd,'myDB');
+fprintf('\nDatabase Path:\n\t%s',db_path)
+
+if ~exist(db_path, 'dir')
+    error('Database path doesnt exist.')
+end
+fprintf('\nCreating imageDatastore...')
+imdb = imageDatastore(db_path,...
+    'IncludeSubfolders',true,...
+    'LabelSource','foldernames',...
+    'ReadFcn',@readEye);
+
+splitRatio = .8;
+fprintf('\nSplitting Train/Test set at ratio %f by %f',splitRatio,1 - splitRatio)
+[traindb,testdb] = splitEachLabel(imdb,splitRatio,'randomized');
+
+
+numclasses = numel(unique(imdb.Labels));
+fprintf('\nNumber of Classes:%d',numclasses)
+
+if showAll
+    montage(traindb)
+title('My Train Dataset')
+ end
