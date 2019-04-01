@@ -23,3 +23,7 @@ There are generally two ways to tell if an image is inverted:
 Like any real-world data set, you will encounter noise in both the images and labels. Images may contain artifacts, be out of 
 focus, underexposed, or overexposed. A major aim of this competition is to develop robust algorithms that can function in the
 presence of noise and variation.
+
+
+
+dataset link: https://www.kaggle.com/meenavyas/diabetic-retinopathy-detection/data
