@@ -1,0 +1,65 @@
+%% alexnet
+fprintf('\nalexnet:Creating network ...')
+net2 = alexnet;
+
+inputSize = net2.Layers(1).InputSize;
+fprintf('\nalexnet:Input Size:\n')
+disp(inputSize)
+
+layersTransfer = net2.Layers(1:end-3);
+layers2 = [
+    layersTransfer
+    fullyConnectedLayer(numclasses,...
+        'Name','fc8',...
+        'WeightLearnRateFactor',20,...
+        'BiasLearnRateFactor',20)
+    softmaxLayer('Name','softmaxL')
+    classificationLayer('Name','classi')];
+
+
+lgraph = layerGraph(layers2);
+if showLayerGraphs
+    fprintf('\nalexnet:Plotting layerGraph ...')
+    figure('Units','normalized','Position',[0.2 0.2 0.6 0.6]);
+    plot(lgraph);
+    title('Alexnet Layers')
+end
+fprintf('\nalexnet:Defining network properties...')
+
+options = trainingOptions('sgdm', ...
+    'LearnRateSchedule',lr_decay_schedule,...
+    'LearnRateDropFactor',lr_drop_factor2,...
+    'Momentum',momentum_val,...
+    'MiniBatchSize',mini_batch_size2, ...
+    'MaxEpochs',6, ...
+    'InitialLearnRate',alpha2, ...
+    'Shuffle','every-epoch', ...
+    'Verbose',false, ...
+    'Plots','training-progress');
+
+if doTraining
+    tic
+    fprintf('\nalexnet:Training the CNN network...')
+    net2 = trainNetwork(traindb2,layers2,options);
+    save net_alexnet.mat net2
+    t2 = toc;
+    fprintf('\nalexnet:Time taken for training:%f secs',t2)
+    
+    fprintf('\nalexnet:Extracting CNN features ...')
+    layer = 'fc8';
+    tic
+    featuresTrain2 = activations(net2,traindb2,layer,'OutputAs','rows');
+    t2 = toc;
+    fprintf('\nalexnet:Time taken for train set feature extraction:%f secs',t2)
+    
+    fprintf('\nalexnetSaving CNN features ...')
+    save feat2.mat featuresTrain2 
+    
+else
+    fprintf('\nalexnetLoading trained network...')
+    load('net_alexnet.mat')
+    
+    fprintf('\nalexnet:Loading CNN features ...')
+    load('feat2.mat')
+end
+
