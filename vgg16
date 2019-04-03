@@ -1,0 +1,62 @@
+%% vgg16
+fprintf('\nvgg16:Creating network ...')
+net1 = vgg16;
+
+inputSize = net1.Layers(1).InputSize;
+fprintf('\nvgg16:Input Size:\n')
+disp(inputSize)
+
+layersTransfer = net1.Layers(1:end-3);
+layers1 = [
+    layersTransfer
+    fullyConnectedLayer(numclasses,'Name','fc8','WeightLearnRateFactor',20,'BiasLearnRateFactor',20)
+    softmaxLayer('Name','softmaxL')
+    classificationLayer('Name','classi')];
+
+
+lgraph = layerGraph(layers1);
+if showLayerGraphs
+    fprintf('\nvgg16:Plotting layerGraph ...')
+    figure('Units','normalized','Position',[0.2 0.2 0.6 0.6]);
+    plot(lgraph);
+    title('vgg16 ')
+end
+fprintf('\nvgg16:Defining network hyperparameters...')
+
+options = trainingOptions('sgdm', ...
+    'LearnRateSchedule',lr_decay_schedule,...
+    'LearnRateDropFactor',lr_drop_factor1,...
+    'Momentum',momentum_val,...
+    'MiniBatchSize',mini_batch_size1, ...
+    'MaxEpochs',6, ...
+    'InitialLearnRate',alpha1, ...
+    'Shuffle','every-epoch', ...
+    'ValidationFrequency',3, ...
+    'Verbose',false, ...
+    'Plots','training-progress');
+
+if doTraining
+    tic
+    fprintf('\nvgg16:Training the CNN network...')
+    net1 = trainNetwork(traindb1,layers1,options);
+    save net_vgg16.mat net1
+    t1 = toc;
+    fprintf('\nvgg16:Time taken for training:%f secs',t1)
+    
+    fprintf('\nvgg16:Extracting CNN features ...')
+    layer = 'fc8';
+    tic
+    featuresTrain1 = activations(net1,traindb1,layer,'OutputAs','rows');
+    t2 = toc;
+    fprintf('\nLevel_1 | vgg16:Time taken for train set feature extraction:%f secs',t2)
+    
+    fprintf('\nvgg16:Saving CNN features ...')
+    save feat1.mat featuresTrain1 
+    
+else
+    fprintf('\nvgg16:Loading trained network...')
+    load('net_vgg16.mat')
+    
+    fprintf('\nvgg16:Loading CNN features ...')
+    load('feat1.mat')
+end
