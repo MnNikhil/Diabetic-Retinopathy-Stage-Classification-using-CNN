@@ -1,0 +1,69 @@
+%% inception_v3
+fprintf('\ninception:Creating network ...')
+net3 = inceptionv3;
+lg = layerGraph(net3);
+inputSize = net3.Layers(1).InputSize;
+% layersTransfer = net3.Layers(1:end-3);
+% layers3 = [
+%     layersTransfer
+%     fullyConnectedLayer(numclasses,...
+%         'Name','predictions_new',...
+%         'WeightLearnRateFactor',20,...
+%         'BiasLearnRateFactor',20)
+%     softmaxLayer('Name','softmaxL')
+%     classificationLayer('Name','classi')];
+last_fc =     fullyConnectedLayer(numclasses,...
+        'Name','predictions_new',...
+        'WeightLearnRateFactor',20,...
+        'BiasLearnRateFactor',20);
+my_softmax =  softmaxLayer('Name','softmaxL');
+my_final =  classificationLayer('Name','classi');
+
+lg = replaceLayer(lg,'predictions',last_fc);
+lg = replaceLayer(lg,'predictions_softmax',my_softmax);
+lg = replaceLayer(lg,'ClassificationLayer_predictions',my_final);
+
+if showLayerGraphs
+    fprintf('\nalexnet:Plotting layerGraph ...')
+    figure('Units','normalized','Position',[0.2 0.2 0.6 0.6]);
+    plot(lg);
+    title('Inception v3 Layers')
+end
+fprintf('\nInception:Defining network properties...')
+
+options = trainingOptions('sgdm', ...
+    'LearnRateSchedule',lr_decay_schedule,...
+    'LearnRateDropFactor',lr_drop_factor3,...
+    'Momentum',momentum_val,...
+    'MiniBatchSize',mini_batch_size3, ...
+    'MaxEpochs',6, ...
+    'InitialLearnRate',alpha3, ...
+    'Shuffle','every-epoch', ...
+    'Verbose',false, ...
+    'Plots','training-progress');
+
+if doinceptionTraining
+    tic
+    fprintf('\nInception:Training the CNN network...')
+    net3 = trainNetwork(traindb3,lg,options);
+    save net_inception.mat net3
+    t3 = toc;
+    fprintf('\nInception:Time taken for training:%f secs',t3)
+    
+    fprintf('\nInception:Extracting CNN features ...')
+    layer = 'predictions';
+    tic
+    featuresTrain3 = activations(net3,traindb3,layer,'OutputAs','rows');
+    t2 = toc;
+    fprintf('\nInception:Time taken for train set feature extraction:%f secs',t2)
+    
+    fprintf('\nInception:Saving CNN features ...')
+    save feat3.mat featuresTrain3 
+    
+else
+    fprintf('\nInception:Loading trained network...')
+    load('net_Inception.mat')
+    
+    fprintf('\nInception:Loading CNN features ...')
+    load('feat3.mat')
+end
